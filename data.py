@@ -41,9 +41,11 @@ def pre_process_folder(data_path, image_names_reg=None, image_classes_rule=None)
             return [], [], [], 0, None
 
         if data_path.endswith(".csv"):
-            df = pd.read_csv('/mnt/data/afarec/data/PetFace/split/hedgehog/train.csv')
+            print('>>>> Load data via pandas')
+            df = pd.read_csv(data_path)
             df['filename'] = '/mnt/data/afarec/data/PetFace/images/' + df['filename']
             df = df.sample(frac=1).reset_index(drop=True)
+            print(f'>>>> Found {len(df)} samples')
 
             image_names = df['filename'].tolist()
             image_classes = df['label'].tolist()

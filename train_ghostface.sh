@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-ROOT_DIR='/mnt/data/afarec/code/face_recognition/ArcFace'
+ROOT_DIR='/mnt/data/afarec/code/face_recognition/GhostFaceNets'
 DATA_DIR='/mnt/data/afarec/data/PetFace'
 
 for loss in "arcface" "cosface"; do

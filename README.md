@@ -16,7 +16,7 @@ Clone Repo and use Python 3.9 with conda:
 10. Test Tensorflow install ```python -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"```
 11. Prepare PetFace data: Use [AFaRec datasetup PetFace](https://github.com/Jan108/AFaRec/blob/main/data/petface.py#L5)/
 12. Alter the Path in [train_arcface.sh](train_arcface.sh)
-13. Train: ```bash train_arcface.sh```
+13. Train: ```bash train_ghostface.sh```
 
 
 Below is the old README.
