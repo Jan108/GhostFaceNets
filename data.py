@@ -39,29 +39,41 @@ def pre_process_folder(data_path, image_names_reg=None, image_classes_rule=None)
         if not os.path.exists(data_path):
             print(">>>> [Error] data_path not exists, data_path:", data_path)
             return [], [], [], 0, None
-        if image_classes_rule is None:
-            # image_classes_rule = default_image_classes_rule
-            image_classes_rule = ImageClassesRule_map(data_path)
-        if image_names_reg is None:
-            image_names = glob2.glob(os.path.join(data_path, "*", "*.jpg"))
-            image_names += glob2.glob(os.path.join(data_path, "*", "*.png"))
+
+        if data_path.endswith(".csv"):
+            df = pd.read_csv('/mnt/data/afarec/data/PetFace/split/hedgehog/train.csv')
+            df['filename'] = '/mnt/data/afarec/data/PetFace/images/' + df['filename']
+            df = df.sample(frac=1).reset_index(drop=True)
+
+            image_names = df['filename'].tolist()
+            image_classes = df['label'].tolist()
+            embeddings = np.array([])
         else:
-            image_names = glob2.glob(os.path.join(data_path, image_names_reg))
-        image_names = np.random.permutation(image_names).tolist()
-        image_classes = [image_classes_rule(ii) for ii in image_names]
-        embeddings = np.array([])
-        np.savez_compressed(dest_pickle, image_names=image_names, image_classes=image_classes)
+            if image_classes_rule is None:
+                # image_classes_rule = default_image_classes_rule
+                image_classes_rule = ImageClassesRule_map(data_path)
+            if image_names_reg is None:
+                image_names = glob2.glob(os.path.join(data_path, "*", "*.jpg"))
+                image_names += glob2.glob(os.path.join(data_path, "*", "*.png"))
+            else:
+                image_names = glob2.glob(os.path.join(data_path, image_names_reg))
+            image_names = np.random.permutation(image_names).tolist()
+            image_classes = [image_classes_rule(ii) for ii in image_names]
+            embeddings = np.array([])
+            np.savez_compressed(dest_pickle, image_names=image_names, image_classes=image_classes)
         image_names, image_classes = np.array(image_names), np.array(image_classes)
     classes = np.max(image_classes) + 1 if len(image_classes) > 0 else 0
     return image_names, image_classes, embeddings, classes, dest_pickle
 
 
 def tf_imread(file_path):
-    # tf.print('Reading file:', file_path)
     img = tf.io.read_file(file_path)
-    # img = tf.image.decode_jpeg(img, channels=3)  # [0, 255]
     img = tf.image.decode_image(img, channels=3, expand_animations=False)  # [0, 255]
     img = tf.cast(img, "float32")  # [0, 255]
+
+    # Convert PetFace to 112x112
+    img = img[28:169, 28:196, :]
+    img = tf.image.resize(img, [112, 112], method='bicubic')
     return img
 
 

@@ -1,3 +1,25 @@
+# Fine-Tune GhostFaceNets on PetFace
+
+This repository is used in the [AFaRec System](https://github.com/Jan108/AFaRec) to train and predict GhostFaceNets.
+
+## Reproduction Quicksteps
+Clone Repo and use Python 3.9 with conda:
+1. Install conda ```wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && bash Miniconda3-latest-Linux-x86_64.sh```
+2. Update shell ```source ~/.bashrc```
+3. Deactivate base env ```conda config --set auto_activate_base false```
+4. Accept TOS ```conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r```
+5. Create env ```conda create -n GhostFaceNets python=3.9 -y```
+6. Enter env ```conda activate GhostFaceNets```
+7. Install cuda 11.1 ```conda install -c conda-forge cudatoolkit=11.1 cudnn=8.1 -y```
+8. Add Conda to lib path ```export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH >> ~/.bashrc``` # TODO
+9. Run ```pip install -r requirements.txt```
+10. Test Tensorflow install ```python -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"```
+11. Prepare PetFace data: Use [AFaRec datasetup PetFace](https://github.com/Jan108/AFaRec/blob/main/data/petface.py#L5)/
+12. Alter the Path in [train_arcface.sh](train_arcface.sh)
+13. Train: ```bash train_arcface.sh```
+
+
+Below is the old README.
 
 # GhostFaceNets
 
