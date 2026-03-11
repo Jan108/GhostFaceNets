@@ -40,7 +40,7 @@ def main(params):
     tt = train.Train(data_path,
                      save_path=save_path,
                      basic_model=basic_model, model=None, lr_base=0.1, lr_decay=0.5, lr_decay_steps=45, lr_min=1e-5,
-                     batch_size=8, random_status=0, eval_freq=1, output_weight_decay=1)
+                     batch_size=128, random_status=0, eval_freq=1, output_weight_decay=1)
 
     optimizer = keras.optimizers.SGD(learning_rate=0.1, momentum=0.9)
     if params.loss == 'arcface':
