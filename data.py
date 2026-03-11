@@ -45,7 +45,7 @@ def pre_process_folder(data_path, image_names_reg=None, image_classes_rule=None)
             print('>>>> Load data via pandas')
             df = pd.read_csv(data_path)
             path = Path(data_path).parent.parent.parent / 'images'
-            df['filename'] = str(path.absolute()) + df['filename']
+            df['filename'] = str(path.absolute()) + '/' + df['filename']
             df = df.sample(frac=1).reset_index(drop=True)
             print(f'>>>> Found {len(df)} samples')
 
