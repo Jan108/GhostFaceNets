@@ -5,6 +5,7 @@ import pandas as pd
 import tensorflow as tf
 from skimage.io import imread
 from tqdm import tqdm
+from pathlib import Path
 
 
 class ImageClassesRule_map:
@@ -43,7 +44,8 @@ def pre_process_folder(data_path, image_names_reg=None, image_classes_rule=None)
         if data_path.endswith(".csv"):
             print('>>>> Load data via pandas')
             df = pd.read_csv(data_path)
-            df['filename'] = '/mnt/data/afarec/data/PetFace/images/' + df['filename']
+            path = Path(data_path).parent.parent.parent / 'images'
+            df['filename'] = str(path.absolute()) + df['filename']
             df = df.sample(frac=1).reset_index(drop=True)
             print(f'>>>> Found {len(df)} samples')
 
