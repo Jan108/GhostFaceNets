@@ -25,8 +25,10 @@ def main(params):
     Path(params.work_dir).mkdir(parents=True, exist_ok=True)
 
     # GhostFaceNetV2 Strides 1
-    basic_model = GhostFaceNets.buildin_models("ghostnetv2", dropout=0, emb_shape=512, output_layer='GDC', bn_momentum=0.9, bn_epsilon=1e-5, stem_strides=1)
-    basic_model = GhostFaceNets.add_l2_regularizer_2_model(basic_model, weight_decay=5e-4, apply_to_batch_normal=False)
+    basic_model = GhostFaceNets.buildin_models("ghostnetv2", dropout=0, emb_shape=512,
+                                               output_layer='GDC', bn_momentum=0.9, bn_epsilon=1e-5)
+    basic_model = GhostFaceNets.add_l2_regularizer_2_model(basic_model, weight_decay=5e-4,
+                                                           apply_to_batch_normal=False)
     basic_model = GhostFaceNets.replace_ReLU_with_PReLU(basic_model)
 
     if params.loss == 'arcface':
