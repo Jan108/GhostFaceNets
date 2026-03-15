@@ -24,18 +24,15 @@ def main(params):
     # Create Work dir
     Path(params.work_dir).mkdir(parents=True, exist_ok=True)
 
-    # GhostFaceNetV1 Strides 1
-    # basic_model = GhostFaceNets.buildin_models("ghostnetv1", dropout=0, emb_shape=512, output_layer='GDC',
-    #                                            bn_momentum=0.9, bn_epsilon=1e-5, scale=True, use_bias=True, strides=1)
-    # basic_model = GhostFaceNets.add_l2_regularizer_2_model(basic_model, weight_decay=5e-4, apply_to_batch_normal=False)
-    # basic_model = GhostFaceNets.replace_ReLU_with_PReLU(basic_model)
+    # GhostFaceNetV2 Strides 1
+    basic_model = GhostFaceNets.buildin_models("ghostnetv2", dropout=0, emb_shape=512, output_layer='GDC', bn_momentum=0.9, bn_epsilon=1e-5, stem_strides=1)
+    basic_model = GhostFaceNets.add_l2_regularizer_2_model(basic_model, weight_decay=5e-4, apply_to_batch_normal=False)
+    basic_model = GhostFaceNets.replace_ReLU_with_PReLU(basic_model)
 
     if params.loss == 'arcface':
-        save_path = os.path.join(params.work_dir, 'ghostV1-1.3-1-(A).h5')
-        basic_model = 'weights/GhostFaceNetV1-1.3-1-ArcFace.h5'
+        save_path = os.path.join(params.work_dir, 'ghostV2-1.3-1-(A).h5')
     else:
-        save_path = os.path.join(params.work_dir, 'ghostV1-1.3-1-(C).h5')
-        basic_model = 'weights/GhostFaceNetV1-1.3-1-CosFace.h5'
+        save_path = os.path.join(params.work_dir, 'ghostV2-1.3-1-(C).h5')
 
     tt = train.Train(data_path,
                      save_path=save_path,
