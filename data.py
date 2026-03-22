@@ -96,15 +96,15 @@ def load_petface_verification(img_root: str, img_list: str, batch_size: int = 16
 
 def load_petface_identification(img_root: str, img_list: str, batch_size: int = 16,
                                 pool_only: bool = False) -> tf.data.Dataset:
-    print('>>>> Load data via pandas')
+    print(f'>>>> Load data via pandas: {img_list}')
     df = pd.read_csv(img_list, sep=',')
     path = Path(img_root)
     df['filename'] = str(path.absolute()) + '/' + df['filename']
 
     if pool_only:
-        df = df[df['pool'] == '0']
+        df = df[df['pool'] == 0]
     else:
-        df = df[df['pool'] == '1']
+        df = df[df['pool'] == 1]
 
     print(f'>>>> Found {len(df)} samples')
 

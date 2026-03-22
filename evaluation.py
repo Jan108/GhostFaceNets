@@ -34,7 +34,7 @@ def verification(params):
         return feat + feat_f
 
     # Load data
-    ds, img1_list, img2_list = load_petface_verification(params.img_path, params.img_verification, batch_size=256)
+    ds, img1_list, img2_list = load_petface_verification(params.img_path, params.img_verification, batch_size=128)
 
     # Predict similarity
     sim_list = []
@@ -77,8 +77,8 @@ def identification(params):
 
     keras.mixed_precision.set_global_policy("mixed_float16")
 
-    pool_ds = load_petface_identification(params.img_path, params.img_identification, pool_only=True, batch_size=256)
-    test_ds = load_petface_identification(params.img_path, params.img_identification, pool_only=False, batch_size=128)
+    pool_ds = load_petface_identification(params.img_path, params.img_identification, pool_only=True, batch_size=128)
+    test_ds = load_petface_identification(params.img_path, params.img_identification, pool_only=False, batch_size=64)
 
     # Load model GhostFaceNetV2 Strides 1
     basic_model = GhostFaceNets.buildin_models("ghostnetv2", dropout=0, emb_shape=512,
@@ -97,7 +97,7 @@ def identification(params):
     for images, batch_labels in tqdm(pool_ds, desc="Extracting features"):
         batch_features = tf.nn.l2_normalize(net(images), axis=1)
         features.append(batch_features)
-        labels.extend(batch_labels.tolist())
+        labels.extend(batch_labels.numpy().tolist())
 
     pool_features, pool_labels = tf.concat(features, axis=0), labels
 
@@ -122,7 +122,7 @@ def identification(params):
             ]
 
             # Write results
-            for test_label, pred_label in zip(test_labels.tolist(), predicted_labels):
+            for test_label, pred_label in zip(test_labels.numpy().tolist(), predicted_labels):
                 f.write(f"{test_label},{pred_label}\n")
 
 
