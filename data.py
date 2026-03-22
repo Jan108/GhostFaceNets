@@ -70,6 +70,54 @@ def pre_process_folder(data_path, image_names_reg=None, image_classes_rule=None)
     return image_names, image_classes, embeddings, classes, dest_pickle
 
 
+def load_petface_verification(img_root: str, img_list: str, batch_size: int = 16) -> (
+        tuple[tf.data.Dataset, list[str], list[str]]):
+    print('>>>> Load data via pandas')
+    df = pd.read_csv(img_list)
+    path = Path(img_root)
+    df['filename1'] = str(path.absolute()) + '/' + df['filename1']
+    df['filename2'] = str(path.absolute()) + '/' + df['filename2']
+    print(f'>>>> Found {len(df)} samples')
+
+    image1_names = df['filename1'].tolist()
+    image2_names = df['filename2'].tolist()
+    image_classes = df['label'].tolist()
+
+    ds = tf.data.Dataset.from_tensor_slices((image1_names, image2_names, image_classes))
+    process_func = lambda img1, img2, label: (tf_imread(img1), tf_imread(img2), label)
+
+    ds = ds.map(process_func, num_parallel_calls=tf.data.experimental.AUTOTUNE).batch(batch_size)
+    ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+
+    return ds, image1_names, image2_names
+
+
+def load_petface_identification(img_root: str, img_list: str, batch_size: int = 16,
+                                pool_only: bool = False) -> tf.data.Dataset:
+    print('>>>> Load data via pandas')
+    df = pd.read_csv(img_list, sep=',')
+    path = Path(img_root)
+    df['filename'] = str(path.absolute()) + '/' + df['filename']
+
+    if pool_only:
+        df = df[df['pool'] == '0']
+    else:
+        df = df[df['pool'] == '1']
+
+    print(f'>>>> Found {len(df)} samples')
+
+    image_names = df['filename'].tolist()
+    image_classes = df['label'].tolist()
+
+    ds = tf.data.Dataset.from_tensor_slices((image_names, image_classes))
+    process_func = lambda img1, label: (tf_imread(img1), label)
+
+    ds = ds.map(process_func, num_parallel_calls=tf.data.experimental.AUTOTUNE).batch(batch_size)
+    ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+
+    return ds
+
+
 def tf_imread(file_path):
     img = tf.io.read_file(file_path)
     img = tf.image.decode_image(img, channels=3, expand_animations=False)  # [0, 255]
