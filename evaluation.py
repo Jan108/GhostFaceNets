@@ -1,17 +1,16 @@
 import argparse
 import os
+import time
 from datetime import datetime, timedelta
 from itertools import islice
 
 import pandas as pd
+import tensorflow as tf
 from tensorflow import keras
 from tqdm import tqdm
 
-import losses, train, GhostFaceNets
-import tensorflow as tf
+import GhostFaceNets
 from data import load_petface_verification, load_petface_identification
-
-from pathlib import Path
 
 
 def verification(params):
@@ -21,15 +20,13 @@ def verification(params):
 
     keras.mixed_precision.set_global_policy("mixed_float16")
 
-    # Load model
-    basic_model = keras.models.load_model(params.weights, compile=False)
-
-    # GhostFaceNetV2 Strides 1
-    # basic_model = GhostFaceNets.buildin_models("ghostnetv2", dropout=0, emb_shape=512,
-    #                                            output_layer='GDC', bn_momentum=0.9, bn_epsilon=1e-5)
-    # basic_model = GhostFaceNets.add_l2_regularizer_2_model(basic_model, weight_decay=5e-4,
-    #                                                        apply_to_batch_normal=False)
-    # basic_model = GhostFaceNets.replace_ReLU_with_PReLU(basic_model)
+    # Load model GhostFaceNetV2 Strides 1
+    basic_model = GhostFaceNets.buildin_models("ghostnetv2", dropout=0, emb_shape=512,
+                                               output_layer='GDC', bn_momentum=0.9, bn_epsilon=1e-5)
+    basic_model = GhostFaceNets.add_l2_regularizer_2_model(basic_model, weight_decay=5e-4,
+                                                           apply_to_batch_normal=False)
+    basic_model = GhostFaceNets.replace_ReLU_with_PReLU(basic_model)
+    basic_model.load_weights(params.weights)
 
     def net(img):
         feat = basic_model(img)
@@ -37,7 +34,7 @@ def verification(params):
         return feat + feat_f
 
     # Load data
-    ds, img1_list, img2_list = load_petface_verification(params.root_dir, params.img_verification, batch_size=64)
+    ds, img1_list, img2_list = load_petface_verification(params.img_path, params.img_verification, batch_size=256)
 
     # Predict similarity
     sim_list = []
@@ -46,8 +43,8 @@ def verification(params):
         vec1 = tf.nn.l2_normalize(net(img1), axis=1)
         vec2 = tf.nn.l2_normalize(net(img2), axis=1)
 
-        sim = tf.keras.losses.CosineSimilarity(axis=1)(vec1, vec2).numpy().tolist()
-        sim_list.extend(sim)
+        sim = tf.reduce_sum(vec1 * vec2, axis=1)
+        sim_list.extend(sim.numpy().tolist())
         label_list.extend(label.numpy().tolist())
 
     os.makedirs(os.path.dirname(params.output), exist_ok=True)
@@ -57,14 +54,14 @@ def verification(params):
         os.path.join(params.output, 'verification.csv'), index=False)
 
     # Test latency
-    ds, _, _ = load_petface_verification(params.root_dir, params.img_verification, batch_size=1)
+    ds, _, _ = load_petface_verification(params.img_path, params.img_verification, batch_size=1)
 
     inf_times = []
     for img1, img2, label in tqdm(islice(ds, params.latency_test),
                                   desc='Test image pairs latency', total=params.latency_test):
         start_time = datetime.now()
-        vec1 = tf.nn.l2_normalize(net(img1), axis=1)
-        vec2 = tf.nn.l2_normalize(net(img2), axis=1)
+        tf.nn.l2_normalize(net(img1), axis=1)
+        tf.nn.l2_normalize(net(img2), axis=1)
         end_time = datetime.now()
         inf_times.append(end_time - start_time)
     avg_time = sum(inf_times, start=timedelta()) / len(inf_times)
@@ -80,18 +77,16 @@ def identification(params):
 
     keras.mixed_precision.set_global_policy("mixed_float16")
 
-    pool_ds = load_petface_identification(params.img_path, params.img_identification, pool_only=True, batch_size=64)
-    test_ds = load_petface_identification(params.img_path, params.img_identification, pool_only=False, batch_size=16)
+    pool_ds = load_petface_identification(params.img_path, params.img_identification, pool_only=True, batch_size=256)
+    test_ds = load_petface_identification(params.img_path, params.img_identification, pool_only=False, batch_size=128)
 
-    # Load model
-    basic_model = keras.models.load_model(params.weights, compile=False)
-
-    # GhostFaceNetV2 Strides 1
-    # basic_model = GhostFaceNets.buildin_models("ghostnetv2", dropout=0, emb_shape=512,
-    #                                            output_layer='GDC', bn_momentum=0.9, bn_epsilon=1e-5)
-    # basic_model = GhostFaceNets.add_l2_regularizer_2_model(basic_model, weight_decay=5e-4,
-    #                                                        apply_to_batch_normal=False)
-    # basic_model = GhostFaceNets.replace_ReLU_with_PReLU(basic_model)
+    # Load model GhostFaceNetV2 Strides 1
+    basic_model = GhostFaceNets.buildin_models("ghostnetv2", dropout=0, emb_shape=512,
+                                               output_layer='GDC', bn_momentum=0.9, bn_epsilon=1e-5)
+    basic_model = GhostFaceNets.add_l2_regularizer_2_model(basic_model, weight_decay=5e-4,
+                                                           apply_to_batch_normal=False)
+    basic_model = GhostFaceNets.replace_ReLU_with_PReLU(basic_model)
+    basic_model.load_weights(params.weights)
 
     def net(img):
         feat = basic_model(img)

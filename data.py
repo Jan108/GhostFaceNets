@@ -86,8 +86,10 @@ def load_petface_verification(img_root: str, img_list: str, batch_size: int = 16
     ds = tf.data.Dataset.from_tensor_slices((image1_names, image2_names, image_classes))
     process_func = lambda img1, img2, label: (tf_imread(img1), tf_imread(img2), label)
 
-    ds = ds.map(process_func, num_parallel_calls=tf.data.experimental.AUTOTUNE).batch(batch_size)
-    ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+    ds = ds.map(process_func, num_parallel_calls=tf.data.AUTOTUNE)
+    ds = ds.map(lambda xx, yy, zz: ((xx - 127.5) * 0.0078125, (yy - 127.5) * 0.0078125, zz))
+    ds = ds.batch(batch_size)
+    ds = ds.prefetch(buffer_size=tf.data.AUTOTUNE)
 
     return ds, image1_names, image2_names
 
@@ -107,12 +109,13 @@ def load_petface_identification(img_root: str, img_list: str, batch_size: int = 
     print(f'>>>> Found {len(df)} samples')
 
     image_names = df['filename'].tolist()
-    image_classes = df['label'].tolist()
+    image_classes = df['individual'].tolist()
 
     ds = tf.data.Dataset.from_tensor_slices((image_names, image_classes))
     process_func = lambda img1, label: (tf_imread(img1), label)
 
     ds = ds.map(process_func, num_parallel_calls=tf.data.experimental.AUTOTUNE).batch(batch_size)
+    ds = ds.map(lambda xx, yy: ((xx - 127.5) * 0.0078125, yy))
     ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
 
     return ds
