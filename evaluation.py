@@ -103,8 +103,8 @@ def identification(params):
 
     # Open output file
     os.makedirs(os.path.dirname(params.output), exist_ok=True)
-    with open(os.path.join(params.output, 'identification.csv'), 'w') as f:
-        f.write("test_label,predicted_label\n")
+    with open(os.path.join(params.output, params.identification_file), 'w') as f:
+        f.write(f"test_label,{','.join([f'predicted_label_{i}' for i in range(5)])},{','.join([f'similarity_{i}' for i in range(5)])}\n")
 
         # Process test images in batches
         for test_images, test_labels in tqdm(test_ds, desc="Processing test images"):
@@ -112,18 +112,10 @@ def identification(params):
 
             # Compute cosine similarity (dot product of normalized vectors)
             sim = tf.matmul(test_features, pool_features, transpose_b=True)  # (batch_size, num_pool)
-            max_sim = tf.reduce_max(sim, axis=1)
-            indices = tf.argmax(sim, axis=1)
-
-            # Determine predicted labels
-            predicted_labels = [
-                pool_labels[i] if sim > 0 else -1
-                for sim, i in zip(max_sim.numpy(), indices.numpy())
-            ]
-
+            top5_sim, top5_indices = tf.math.top_k(sim, k=5)
             # Write results
-            for test_label, pred_label in zip(test_labels.numpy().tolist(), predicted_labels):
-                f.write(f"{test_label},{pred_label}\n")
+            for test_label, pred_label, pred_sim in zip(test_labels.numpy().tolist(), top5_indices.numpy().tolist(), top5_sim.numpy().tolist()):
+                f.write(f"{test_label},{','.join([str(i) for i in pred_label])},{','.join([str(i) for i in pred_sim])}\n")
 
 
 if __name__ == '__main__':
@@ -136,6 +128,16 @@ if __name__ == '__main__':
     parser.add_argument("--img_identification", type=str, default='./data/split/identification.csv',
                         help="File containing a list of images files with corresponding label for identification")
     parser.add_argument("--latency_test", type=int, default=1000, help="Amount of images for the latency test")
+    parser.add_argument("--ident-general", action='store_true', help="Generalized model evaluation")
     args = parser.parse_args()
-    verification(args)
-    identification(args)
+    # verification(args)
+    args.identification_file = 'identification.csv'
+    if args.ident_general:
+        base_path_ident = args.img_identification
+        print('Loading and performing each class separately for generalized model')
+        for cls in ['bird', 'cat', 'dog', 'small_animals']:
+            args.img_identification = f'{base_path_ident}/{cls}/identification_img.csv'
+            args.identification_file = f'identification_{cls}.csv'
+            identification(args)
+    else:
+        identification(args)
