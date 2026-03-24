@@ -64,10 +64,20 @@ def verification(params):
         tf.nn.l2_normalize(net(img2), axis=1)
         end_time = datetime.now()
         inf_times.append(end_time - start_time)
-    avg_time = sum(inf_times, start=timedelta()) / len(inf_times)
-    print(f'Inference for {params.weights} took {avg_time}')
+    avg_time_pair = sum(inf_times, start=timedelta()) / len(inf_times)
+
+    inf_times = []
+    for img1, img2, label in tqdm(islice(ds, params.latency_test),
+                                  desc='Test image pairs latency', total=params.latency_test):
+        start_time = datetime.now()
+        tf.nn.l2_normalize(net(img1), axis=1)
+        end_time = datetime.now()
+        inf_times.append(end_time - start_time)
+    avg_time_single = sum(inf_times, start=timedelta()) / len(inf_times)
+    print(f'Inference for {params.weights} took pair: {avg_time_pair}, single: {avg_time_single}')
     with open(os.path.join(params.output, 'timing.txt'), 'w') as file:
-        file.write(str(avg_time))
+        file.write(str(avg_time_pair)+'\n')
+        file.write(str(avg_time_single)+'\n')
 
 
 def identification(params):
@@ -113,8 +123,13 @@ def identification(params):
             # Compute cosine similarity (dot product of normalized vectors)
             sim = tf.matmul(test_features, pool_features, transpose_b=True)  # (batch_size, num_pool)
             top5_sim, top5_indices = tf.math.top_k(sim, k=5)
+
+            pred_labels = [
+                [pool_labels[i] for i in topk] for topk in top5_indices.numpy().tolist()
+            ]
+
             # Write results
-            for test_label, pred_label, pred_sim in zip(test_labels.numpy().tolist(), top5_indices.numpy().tolist(), top5_sim.numpy().tolist()):
+            for test_label, pred_label, pred_sim in zip(test_labels.numpy().tolist(), pred_labels, top5_sim.numpy().tolist()):
                 f.write(f"{test_label},{','.join([str(i) for i in pred_label])},{','.join([str(i) for i in pred_sim])}\n")
 
 
@@ -130,7 +145,7 @@ if __name__ == '__main__':
     parser.add_argument("--latency_test", type=int, default=1000, help="Amount of images for the latency test")
     parser.add_argument("--ident-general", action='store_true', help="Generalized model evaluation")
     args = parser.parse_args()
-    # verification(args)
+    verification(args)
     args.identification_file = 'identification.csv'
     if args.ident_general:
         base_path_ident = args.img_identification
