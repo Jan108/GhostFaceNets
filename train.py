@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+
 import data
 import evals
 import losses
@@ -423,6 +425,7 @@ class Train:
         embLossTypes=None,
         embLossWeights=1,
         tripletAlpha=0.35,
+        load_and_export=None,
     ):
         emb_loss_names, emb_loss_weights = self.__init_emb_losses__(embLossTypes, embLossWeights)
 
@@ -494,6 +497,16 @@ class Train:
 
         if self.gently_stop:
             self.callbacks.append(self.gently_stop)
+
+        if load_and_export is not None:
+            if load_and_export == '':
+                return
+            print(">>>> Load model from:", load_and_export)
+            self.model.load_weights(load_and_export)
+            latest_save_path = Path(self.save_path).parent / f'model_epoch{epoch}.h5'
+            print(">>>> Saving basic model to:", latest_save_path)
+            self.basic_model.save(latest_save_path)
+            return
 
         if bottleneckOnly:
             print(">>>> Train bottleneckOnly...")

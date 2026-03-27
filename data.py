@@ -102,9 +102,9 @@ def load_petface_identification(img_root: str, img_list: str, batch_size: int = 
     df['filename'] = str(path.absolute()) + '/' + df['filename']
 
     if pool_only:
-        df = df[df['pool'] == 0]
+        df = df[df['pool'] != 0]
     else:
-        df = df[df['pool'] == 1]
+        df = df[df['pool'] != 1]
 
     print(f'>>>> Found {len(df)} samples')
 
