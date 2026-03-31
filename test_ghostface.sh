@@ -21,8 +21,8 @@ for loss in "arcface" "cosface"; do
   done
   PYTHONPATH=$ROOT_DIR:$PYTHONPATH \
     python $ROOT_DIR/evaluation.py \
-    --output "${ROOT_DIR}/work_dir/${loss}_all" \
-    --weights "${ROOT_DIR}/work_dir/${loss}_all/ghostV2-1.3-1-(${loss_a})_basic_model_latest.h5" \
+    --output "${ROOT_DIR}/work_dir_b256/${loss}_all" \
+    --weights "${ROOT_DIR}/work_dir_b256/${loss}_all/ghostV2-1.3-1-(${loss_a})_basic_model_latest.h5" \
     --img_path "${DATA_DIR}/images" \
     --img_verification "${DATA_DIR}/split/all/verification.csv" \
     --img_identification "${DATA_DIR}/split" \
